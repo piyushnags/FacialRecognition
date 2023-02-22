@@ -7,6 +7,8 @@ import torch.nn.functional as F
 
 import torchvision.transforms as T
 
+
+
 '''
 TODO: 
     1. Create class for Siamese Network using
@@ -44,3 +46,12 @@ class Siamese(nn.Module):
     
     def forward(x1, x2):
         raise NotImplementedError
+
+
+'''
+Run this module for testing 
+the models or checking
+model structures
+'''
+if __name__ == "__main__":
+    model = 
