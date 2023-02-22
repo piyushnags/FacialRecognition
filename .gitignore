@@ -1,5 +1,7 @@
 # MACOS Specific
 .DS_Store
+rough/
+weights/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

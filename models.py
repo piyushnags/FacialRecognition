@@ -10,8 +10,10 @@ from PIL import Image
 import torch
 from torch import nn, Tensor
 import torch.nn.functional as F
-import torch.utils.data.dataloader as dataloader
-import torch.utils.data.dataset as dset
+from torch.utils.data import(
+    DataLoader,
+    Dataset as dset
+)
 
 # Torchvision Imports
 import torchvision.transforms as T
@@ -22,15 +24,10 @@ from torchvision.models import resnet101, ResNet101_Weights
 
 '''
 TODO: 
-    1. Create class for Siamese Network using
-    Resnet50 as backbone with pretrained weights.
-
-    2. Use JPEG encodings as input instead of raw
-    images.
-
-    3. Use weights from Transfer Learning to study
-    accuracy    
+    1. Add support for training
+    2. Improve model architecture
 '''
+
 
 '''
 Class for Siamese Network built using
@@ -104,8 +101,6 @@ class Siamese(nn.Module):
         
         Description:
         Forward propagation of Siamese Network
-        
-        TODO: Add support for training
         '''
         # Pass both inputs through shared backbone
         out1 = self.backbone(x1)
@@ -127,21 +122,25 @@ Sandbox for model testing
 Currently performs a sanity check on the Siamese 
 network by sending in the same image for both inputs.
 
-Expected output: 1 (duh!)
+Expected output: Probability of match
 '''
 if __name__ == "__main__":
-    model = Siamese(pretrained=True)
+    model = Siamese()
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    model.load_state_dict( torch.load('weights/Siamese_BCE.pth', map_location=device) )
     model.eval()
-    dataset = datasets.ImageFolder("facenet_pytorch/data/test_images")
+    
+    dataset = datasets.ImageFolder("facenet_pytorch/data/test_images_aligned")
     img = dataset[0][0]
+    img_ = dataset[1][0]
     preprocess = T.Compose([
         T.ToTensor()
     ])
-    img = preprocess(img)
-    img = img.unsqueeze(0)
-
-    with torch.no_grad():
-        pred = model(img, img)
+    img = preprocess(img).unsqueeze(0)
+    img_ = preprocess(img_).unsqueeze(0)
     
-    print(pred)
+    with torch.no_grad():
+        p = model(img, img)
+    
+    print(p)    
     
