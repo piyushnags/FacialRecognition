@@ -38,3 +38,9 @@ Loss Function:
     meaningful positive matches in tasks like
     facial recognition.
 '''
+class Siamese(nn.Module):
+    def __init__(self):
+        super(Siamese, self).__init__()
+    
+    def forward(x1, x2):
+        raise NotImplementedError
