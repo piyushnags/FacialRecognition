@@ -21,17 +21,17 @@ from torchvision import datasets
 
 # Model Imports
 from torchvision.models import resnet101, ResNet101_Weights
+from facenet_pytorch import *
 
 '''
-TODO: 
-    1. Add support for training
-    2. Improve model architecture
+FIXME: Delete this file. Use InceptionResnet
+for generating embeddings instead
 '''
 
 
 '''
 Class for Siamese Network built using
-ResNet50 as a backbone with pretrained
+ResNet101 as a backbone with pretrained
 weights.
 
 Input:
@@ -125,14 +125,21 @@ network by sending in the same image for both inputs.
 Expected output: Probability of match
 '''
 if __name__ == "__main__":
-    model = Siamese()
+    # model = Siamese()
+    model = InceptionResnetV1(pretrained='vggface2')
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model.load_state_dict( torch.load('weights/Siamese_BCE.pth', map_location=device) )
+    
+    # if not os.path.exists("weights"):
+    #     print("Missing model weights: download pretrained weights before running")
+    
+    # model.load_state_dict( torch.load("weights/Siamese_BCE.pth", map_location=device) )
     model.eval()
+    model.classify = True
     
     dataset = datasets.ImageFolder("facenet_pytorch/data/test_images_aligned")
     img = dataset[0][0]
     img_ = dataset[1][0]
+
     preprocess = T.Compose([
         T.ToTensor()
     ])
@@ -140,7 +147,9 @@ if __name__ == "__main__":
     img_ = preprocess(img_).unsqueeze(0)
     
     with torch.no_grad():
-        p = model(img, img)
+        p1 = model(img)
+        p2 = model(img_)
     
-    print(p)    
+    score = torch.sum( torch.square( p1-p2 ) )
+    print(score)    
     

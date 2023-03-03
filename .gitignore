@@ -1,7 +1,10 @@
-# MACOS Specific
-.DS_Store
+# Project Specific
 rough/
 weights/
+results/
+
+# MACOS Specific
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
