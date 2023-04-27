@@ -1,6 +1,6 @@
 scikit-learn
 matplotlib
-torch==1.13.1
-torchvision==0.14.1
+torch
+torchvision
 opencv-python
 pandas
