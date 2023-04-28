@@ -1,4 +1,10 @@
 scikit-learn
+scikit-image
+pytorch_msssim
+natsort
+einops
+timm
+thop
 matplotlib
 torch
 torchvision

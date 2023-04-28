@@ -19,7 +19,33 @@ import torchvision
 from facenet_pytorch import *
 
 
-def save_aligned_faces(x: Tensor):
+
+class AddNoise():
+    '''
+    Description:
+        Callable for adding Gaussian noise
+        By default, Gaussian noise with zero mean
+        and unit variance is added
+
+    Args:
+        var: variance of Gaussian noise
+        mean: mean of Gaussian noise
+    
+    Returns:
+        x: corrupted image(s)
+    '''
+    def __init__(self, var=1., mean=0.):
+        self.std = var**0.5
+        self.mean = mean
+
+
+    def __call__(self, x: Tensor) -> Tensor:
+        x += self.std*torch.randn(x.size()) + self.mean
+        return torch.clamp(x, 0, 1)
+
+
+
+def save_faces(x: Tensor, path: str):
     '''
     Description:
     Utility function to save aligned faces extracted
@@ -41,7 +67,7 @@ def save_aligned_faces(x: Tensor):
         print("Received NoneType as Input, cannot save NoneType")
         return
     
-    path = 'results/aligned_faces'
+    path = os.path.join('results', path)
     if not os.path.exists(path):
         os.makedirs(path)
 
