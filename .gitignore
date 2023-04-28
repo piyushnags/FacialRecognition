@@ -2,6 +2,8 @@
 rough/
 weights/
 results/
+facenet_pytorch/
+sunet/
 
 # MACOS Specific
 .DS_Store
