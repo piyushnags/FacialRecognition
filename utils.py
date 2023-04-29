@@ -1,5 +1,13 @@
-# Buit-in Imports
-import os, time, typing
+# Buit-in, Parsing Imports
+from typing import Any
+import os, time
+import argparse
+import yaml
+from glob import glob
+from collections import OrderedDict
+
+# File handling Imports
+from natsort import natsorted
 
 # Math Imports
 import matplotlib.pyplot as plt
@@ -9,14 +17,20 @@ import pandas as pd
 # Imaging and Video Imports
 from PIL import Image
 import cv2
+from skimage import img_as_ubyte
 
 # PyTorch Imports
 import torch
+import torch.nn as nn
 from torch import Tensor
 import torchvision
+import torchvision.transforms.functional as TF
 
 # Facenet Imports
 from facenet_pytorch import *
+
+# SUNet imports 
+from models import SUNet_model
 
 
 
@@ -81,3 +95,179 @@ def save_faces(x: Tensor, path: str):
             os.path.join(path, 'face_{}.png'.format(i+1)),
             tmp
         )
+
+
+def get_options(path: str) -> object:
+    '''
+    Description:
+        Wrapper function to get options from
+        a YAML config file
+    
+    Args:
+        path: string with path to YAML config
+              file
+    
+    Returns:
+        options: object containing parsed options
+                 from YAML config file
+    '''
+    with open(path, 'r') as config:
+        options = yaml.safe_load(config)
+    
+    return options
+
+
+def save_img(filepath, img):
+    '''
+    Description:
+        Wrapper function to save an image using openCV
+    
+    Args:
+        filepath: string contaning save location
+        img: numpy array of image
+    
+    Returns:
+        None
+    '''
+    cv2.imwrite(filepath, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+
+
+def parse_sunet() -> Any:
+    '''
+    Description:
+        helper function for parsing user input args
+    
+    Args:
+        User input
+    
+    Returns:
+        args: namespace object
+    '''
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--yaml_path', type=str, default='training.yaml', help='Path to YAML config, needed for SUNet configuration')
+    parser.add_argument('--input_dir', type=str, default='results/noisy_faces/', help='path to dir containing corrupted images')
+    parser.add_argument('--result_dir', type=str, default='sunet_results/', help='path to save dir for storing restored images')
+    parser.add_argument('--weights', type=str, default='weights/model.pth', help='path to SUNet transformer weights')
+    parser.add_argument('--window_size', type=int, default=8, help='Shifting window size')
+    parser.add_argument('--device', type=str, default='cpu', help='Device for training/inference. Use cuda for GPU')
+    args = parser.parse_args()
+    return args
+
+
+def load_checkpoint(model: nn.Module, weights: str, device: Any):
+    '''
+    Description:
+        helper function for loading transformer weights.
+        Improved version of the function in the original repo
+    
+    Args:
+        model: torch model, transformer
+        weights: string with path to weights
+        device: cpu/cuda for loading weights
+    
+    Returns:
+        None
+    '''
+    # add device in map location to ensure that model and data
+    # are on correct devices
+    checkpoint = torch.load(weights, map_location=device)
+    try:
+        model.load_state_dict(checkpoint["state_dict"])
+    
+    # Bit of a hack right here, but doesn't happen in 
+    # most cases
+    except:
+        state_dict = checkpoint["state_dict"]
+        new_state_dict = OrderedDict()
+        for k, v in state_dict.items():
+            name = k[7:]  
+            new_state_dict[name] = v
+        model.load_state_dict(new_state_dict)
+
+
+def clean_images(inp_dir: str, out_dir: str, weights: str, opt: object, device: Any):
+    '''
+    Description:
+        Helper function that calls SUNet transformer to clean all
+        corrupted images within a directory
+    
+    Args:
+        inp_dir: string with path to input directory
+        out_dir: string containin save path
+        weights: string with path to model weights
+        opt: object containing SUNet options
+        device: cpu/cuda for inference
+    
+    Returns:
+        None
+    '''
+    # Create output dir if it does not exist
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    
+    files = natsorted(glob(os.path.join(inp_dir, '*.jpg'))
+                  + glob(os.path.join(inp_dir, '*.JPG'))
+                  + glob(os.path.join(inp_dir, '*.png'))
+                  + glob(os.path.join(inp_dir, '*.PNG')))
+    
+    if len(files) == 0:
+        raise RuntimeError(f"No files at {inp_dir}")
+    
+    # Instantiate transformer model and move to device
+    model = SUNet_model(opt)
+    model.to(device)
+
+    # Get weights and prepare for inference
+    load_checkpoint(model, weights, device)
+    model.eval()
+
+    print('Calling SUNet Transformer...')
+
+    # Clean 'for each' file
+    for f in files:
+        # Need to convert to RGB because
+        # openCV authors are psychopaths 
+        # for storing images in BGR
+        img = Image.open(f).convert('RGB')
+
+        img_ = TF.to_tensor(img).unsqueeze(0).to(device)
+
+        with torch.no_grad():
+            restored = model(img_)    
+            restored = torch.clamp(restored, 0, 1)
+            restored = restored.permute(0, 2, 3, 1).cpu().detach().numpy()
+        
+        restored = img_as_ubyte(restored[0])
+        f_ = os.path.splitext(os.path.split(f)[-1])[0]
+        save_img((os.path.join(out_dir, f_ + '.png')), restored)
+    
+    print('Success!')
+
+
+def evaluate_embeddings(e1: Tensor, e2: Tensor) -> pd.DataFrame:
+    '''
+    Description:
+        helper function to evaluate embeddings based on 
+        L2 norm
+
+        Args:
+            e1: first embedding (Tensor)
+            e2: second embedding (Tensor)
+        
+        Returns:
+            df: Data frame which is a matrix representation
+                of the scores for every pair of faces
+    '''
+    # Generate scores for all pairs of faces
+    scores = [ 
+        [ float(torch.sum(torch.square(e2_ - e1_))) for e2_ in e2 ] 
+        for e1_ in e1 
+    ]
+
+    # Convert to data frame for visualization purposes
+    df = pd.DataFrame(scores)
+    
+    # Display the dataframe
+    print(df) 
+
+    return df

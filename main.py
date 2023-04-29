@@ -61,7 +61,8 @@ def main():
     print("Using Device: {}".format(device))
     
     # Initialize face extraction and Inception models
-    clip_size = 224
+    # Clip to 256 for the SUNet transformer
+    clip_size = 256
     mtcnn = MTCNN( clip_size, keep_all=True, device=device )
     model = InceptionResnetV1(pretrained='vggface2', device=device)
     model.eval()
@@ -112,12 +113,6 @@ def main():
     # Pass the aligned and noisy faces to the InceptionResnet model
     # for generating embeddings and do some book keeping
     inf_start = time.time()
-    
-    # move model and data to GPU
-    model.to(device)
-    clean_frame, noisy_frame = clean_frame.to(device), noisy_frame.to(device)
-    
-    # inference
     embeddings_clean = model(clean_frame).detach().cpu()
     embeddings_noisy = model(noisy_frame).detach().cpu()
     end = time.time()
@@ -125,14 +120,7 @@ def main():
     # Generate a similarity matrix of all faces detected
     # Note that the same pairs of faces are being compared for
     # the noisy and clean images
-    scores = [ 
-        [ float(torch.sum(torch.square(e2 - e1))) for e2 in embeddings_clean ] 
-        for e1 in embeddings_noisy 
-    ]
-    
-    # Display Results
-    df = pd.DataFrame(scores)
-    print(df)
+    evaluate_embeddings(embeddings_clean, embeddings_noisy)
 
     # Logging generic stats about execution time
     print("Preprocesing Time: {:.2f} s".format(preprocessing_end - start))
@@ -141,4 +129,18 @@ def main():
 
 
 if __name__ == '__main__':
+    args = parse_sunet()
+    
+    # Collect aligned faces
     main()
+
+    # Determine device for transformer inference
+    if args.device == 'cuda':
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    else:
+        device = torch.device('cpu')
+    
+    # Get options for the model and generate clean images
+    options = get_options(args.yaml_path)
+    clean_images(args.input_dir, args.result_dir, args.weights, options, device)
+

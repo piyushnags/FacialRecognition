@@ -4,6 +4,7 @@ weights/
 results/
 facenet_pytorch/
 sunet/
+sunet_results/
 
 # MACOS Specific
 .DS_Store
