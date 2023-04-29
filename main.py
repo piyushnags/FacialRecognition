@@ -113,6 +113,7 @@ def main():
     # Pass the aligned and noisy faces to the InceptionResnet model
     # for generating embeddings and do some book keeping
     inf_start = time.time()
+    clean_frame, noisy_frame = clean_frame.to(device), noisy_frame.to(device)
     embeddings_clean = model(clean_frame).detach().cpu()
     embeddings_noisy = model(noisy_frame).detach().cpu()
     end = time.time()
