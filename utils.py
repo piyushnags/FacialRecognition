@@ -171,6 +171,7 @@ def parse_options() -> Any:
     parser.add_argument('--gamma', type=float, default=0.975, help='Decay for step LR scheduler')
     parser.add_argument('--num_epochs', type=int, default=10, help='Number of Epochs to train')
     parser.add_argument('--num_batches', type=int, default=330, help='Total training batches for training and validation split as 10:1')
+    parser.add_argument('--train_dir', type=str, default='train_results/', help='Dir to store training results')
 
     # Blurry dataset Options
     parser.add_argument('--num_blurry_batches', type=int, default=44, help='Number of batches to be generated for training InceptionResnet')
