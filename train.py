@@ -26,24 +26,31 @@ def create_sample_dataset(args: Any):
 
     if args.add_noise:
         save_dir = 'blurry_dataset/'
+
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        
+        with torch.no_grad():
+            for i, img in enumerate(tqdm(loader)):
+                if i > args.num_blurry_batches:
+                    break
+                img = img.to(device)
+                out = model(img)
+                out = torch.clamp(out, 0, 1)
+                for j in range(out.size(0)):
+                    save_path = os.path.join(save_dir, f"image_{i}_{j}.png")
+                    torchvision.utils.save_image(out[j], save_path)
+    
     else:
         save_dir = 'sample_dataset/'
-
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    
-    with torch.no_grad():
         for i, img in enumerate(tqdm(loader)):
             if i > args.num_blurry_batches:
                 break
-            img = img.to(device)
-            out = model(img)
-            out = torch.clamp(out, 0, 1)
-            for j in range(out.size(0)):
+            for j in range(img.size(0)):
                 save_path = os.path.join(save_dir, f"image_{i}_{j}.png")
-                torchvision.utils.save_image(out[j], save_path)
+                torchvision.utils.save_image(img[j], save_path)
     
-    print("Blurry dataset created!")
+    print("Sample dataset created!")
 
 
 
