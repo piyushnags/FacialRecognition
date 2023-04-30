@@ -141,6 +141,7 @@ def main(args: Any):
 
     # Generate similarity matrix for filtered images and clean images
     filtered_imgs = get_filtered_imgs(args.result_dir)
+    filtered_imgs.to(device)
     with torch.no_grad():
         embeddings_filtered = model(filtered_imgs).detach().cpu()
 
