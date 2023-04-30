@@ -25,8 +25,8 @@ def evaluate_similarity(model: nn.Module, dataset: Dataset, batch_size: int, num
         print(img1.max())
         print(img1.min())
 
-        score = ssim(img1, img2, data_range=1, size_average=False)
-        score = torch.mean(score)
+        score = ssim(img1, img2, data_range=1, size_average=True)
+        # score = torch.mean(score)
         running_ssim.append(score.item())
 
         with torch.no_grad():
