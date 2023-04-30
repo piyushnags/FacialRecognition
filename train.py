@@ -30,6 +30,8 @@ def create_blurry_dataset(args: Any):
     
     with torch.no_grad():
         for i, img in enumerate(tqdm(loader)):
+            if i > args.num_blurry_batches:
+                break
             img = img.to(device)
             out = model(img)
             out = torch.clamp(out, 0, 1)
