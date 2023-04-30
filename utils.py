@@ -160,6 +160,7 @@ def parse_options() -> Any:
     # General Options
     parser.add_argument('--num_workers', type=int, default=2, help='Number of worker threads during loading')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size during loading')
+    parser.add_argument('--data_root', type=str, default='data_root/', help='Path to zipped dataset')
 
     # Blurry dataset Options
     parser.add_argument('--num_blurry_batches', type=int, default=44, help='Number of batches to be generated for training InceptionResnet')
