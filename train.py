@@ -142,5 +142,8 @@ if __name__ == '__main__':
         else:
             device = torch.device('cpu')
         model = InceptionResnetV1(pretrained='vggface2', device=device)
+        for child in list(model.children())[:-7]:
+            for p in child.parameters():
+                p.requires_grad_(False)
         train_loader, test_loader = get_loaders(args)
         train(args, model, train_loader, test_loader, device)
