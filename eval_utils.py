@@ -24,6 +24,7 @@ def evaluate_similarity(model: nn.Module, dataset: Dataset, batch_size: int, num
         img1, img2 = img1.to(device), img2.to(device)
         print(img1.max())
         print(img1.min())
+        print(img1.shape)
 
         score = ssim(img1, img2, data_range=1, size_average=True)
         # score = torch.mean(score)
