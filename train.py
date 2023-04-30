@@ -34,7 +34,8 @@ def create_blurry_dataset(args: Any):
             out = model(img)
             out = torch.clamp(out, 0, 1)
             for j in range(out.size(0)):
-                torchvision.utils.save_image(out[j], f"image_{i}_{j}.png")
+                save_path = os.path.join(save_dir, f"image_{i}_{j}.png")
+                torchvision.utils.save_image(out[j], save_path)
     
     print("Blurry dataset created!")
 
