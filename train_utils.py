@@ -109,7 +109,7 @@ class InceptionDataset(Dataset):
     def __getitem__(self, idx) -> Tuple[List[Tensor], List[Tensor]]:
         im1 = Image.open( self.files1[idx] ).convert('RGB')
         im2 = Image.open( self.files2[idx] ).convert('RGB')
-        return im1, im2
+        return self.to_tensor(im1), self.to_tensor(im2)
     
 
     def __len__(self) -> int:
