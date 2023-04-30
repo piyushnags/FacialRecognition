@@ -61,7 +61,7 @@ class SUNetDataset(Dataset):
         self.dset = zip_dataset
         self.transforms = transforms
         self.preprocess = T.Compose([
-            T.Resize( (320,320), antialias=None )
+            T.Resize( (256,256), antialias=None )
         ])
     
 
