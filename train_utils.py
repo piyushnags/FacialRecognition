@@ -84,9 +84,11 @@ def get_pre_loader(args: Any) -> DataLoader:
         raise ValueError(f"Path {root} does not exist")
     
     zip_dataset = ZipDataset(root, cache_into_memory=True)
-    augment = T.Compose([
-        _AddNoise(args.noise_var, args.noise_mean)
-    ])
+    augment = None
+    if args.add_noise:
+        augment = T.Compose([
+            _AddNoise(args.noise_var, args.noise_mean)
+        ])
     dataset = SUNetDataset(zip_dataset, augment)
 
     pre_loader = DataLoader(dataset, args.batch_size, num_workers=args.num_workers)
