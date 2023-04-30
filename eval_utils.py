@@ -24,7 +24,7 @@ def evaluate_similarity(model: nn.Module, dataset: Dataset, batch_size: int, num
     for i, (img1, img2) in enumerate(tqdm(loader)):
         if i == 0:
             plt.imshow(img1[0].permute(1,2,0))
-            plt.imsave('test.png', img1[0].permute(1,2,0))
+            plt.imsave('test.png', 255*img1[0].permute(1,2,0).byte())
         img1, img2 = img1.to(device), img2.to(device)
         print(img1.max())
         print(img1.min())
