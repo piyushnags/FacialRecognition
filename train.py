@@ -72,6 +72,8 @@ def save_aligned_datasets(args: Any):
     model = MTCNN(256, keep_all=True, device=device)
 
     for i, (img1, img2) in enumerate(tqdm(loader)):
+        if i > args.num_blurry_batches:
+            break
         img1, img2 = img1.to(device), img2.to(device)
         out1, out2 = model(img1), model(img2)
         out1 = torch.round(out1*128+127.5)
