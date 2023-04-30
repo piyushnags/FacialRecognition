@@ -1,5 +1,5 @@
 # Buit-in, Parsing Imports
-from typing import Any
+from typing import Any, List
 import os, time
 import argparse
 import yaml
@@ -37,7 +37,7 @@ from models import SUNet_model
 class AddNoise():
     '''
     Description:
-        Callable for adding Gaussian noise
+        Callable for adding Gaussian noise to a standardized img
         By default, Gaussian noise with zero mean
         and unit variance is added
 
@@ -55,7 +55,9 @@ class AddNoise():
 
     def __call__(self, x: Tensor) -> Tensor:
         x += self.std*torch.randn(x.size()) + self.mean
-        return torch.clamp(x, 0, 1)
+        x_min = (0 - 127.5)/128.0
+        x_max = (255 - 127.5)/128.0
+        return torch.clamp(x, x_min, x_max)
 
 
 
@@ -132,7 +134,7 @@ def save_img(filepath, img):
     cv2.imwrite(filepath, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
 
-def parse_sunet() -> Any:
+def parse_options() -> Any:
     '''
     Description:
         helper function for parsing user input args
@@ -144,12 +146,16 @@ def parse_sunet() -> Any:
         args: namespace object
     '''
     parser = argparse.ArgumentParser()
+
+    # SUNet options
     parser.add_argument('--yaml_path', type=str, default='training.yaml', help='Path to YAML config, needed for SUNet configuration')
     parser.add_argument('--input_dir', type=str, default='results/noisy_faces/', help='path to dir containing corrupted images')
     parser.add_argument('--result_dir', type=str, default='sunet_results/', help='path to save dir for storing restored images')
     parser.add_argument('--weights', type=str, default='weights/model.pth', help='path to SUNet transformer weights')
     parser.add_argument('--window_size', type=int, default=8, help='Shifting window size')
     parser.add_argument('--device', type=str, default='cpu', help='Device for training/inference. Use cuda for GPU')
+    parser.add_argument('--noise_var', type=float, default=3e-2, help='Variance of Gaussian noise added as corruption')
+    parser.add_argument('--noise_mean', type=float, default=1e-2, help='Mean of Gaussian noise added as corruption')
     args = parser.parse_args()
     return args
 
@@ -225,9 +231,7 @@ def clean_images(inp_dir: str, out_dir: str, weights: str, opt: object, device: 
 
     # Clean 'for each' file
     for f in files:
-        # Need to convert to RGB because
-        # openCV authors are psychopaths 
-        # for storing images in BGR
+        # Need to convert to RGB
         img = Image.open(f).convert('RGB')
 
         img_ = TF.to_tensor(img).unsqueeze(0).to(device)
@@ -271,3 +275,38 @@ def evaluate_embeddings(e1: Tensor, e2: Tensor) -> pd.DataFrame:
     print(df) 
 
     return df
+
+
+def get_filtered_imgs(path: str) -> List[Tensor]:
+    '''
+    Description:
+        Helper function to return all images at specified path
+        as a batched Tensor (torch)
+    
+    Args: 
+        path: string containing path to dir with images
+    
+    Returns:
+        x: Batched tensor
+    '''
+    if not os.path.exists(path):
+        raise ValueError(f"Path {path} does not exist")
+
+    files = natsorted(glob(os.path.join(path, '*.jpg'))
+                  + glob(os.path.join(path, '*.JPG'))
+                  + glob(os.path.join(path, '*.png'))
+                  + glob(os.path.join(path, '*.PNG')))
+    
+    if len(files) == 0:
+        raise RuntimeError(f"No files at {path}")
+    
+
+    for i, f in enumerate(files):
+        im = Image.open(f).convert('RGB')
+        im = TF.to_tensor(im)
+        if i == 0:
+            x = im.unsqueeze(0)
+        else:
+            x = torch.cat( (x, im.unsqueeze(0)) )
+    
+    return x    

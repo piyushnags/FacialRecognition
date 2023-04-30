@@ -22,10 +22,8 @@ from facenet_pytorch import *
 from utils import *
 
 
-def main():
+def main(args: Any):
     '''
-    TODO: Add support for argparse/configparse
-
     Description:
     main function that demonstrates the performance of the 
     Inception Resnet network on video footage before and after
@@ -57,7 +55,10 @@ def main():
         print('Error opening file stream')
     
     # Detect and initialize device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if args.device == 'cuda':
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    else:
+        device = torch.device('cpu')
     print("Using Device: {}".format(device))
     
     # Initialize face extraction and Inception models
@@ -71,7 +72,7 @@ def main():
     # transform (scale the noise accordingly since 
     # images are whitened before using the MTCNN)
     noisify = T.Compose([
-        AddNoise(1e-2, 1e-2)
+        AddNoise(args.noise_var, args.noise_mean)
     ])
 
     # Read frames from video and prepare
@@ -114,34 +115,42 @@ def main():
     # for generating embeddings and do some book keeping
     inf_start = time.time()
     clean_frame, noisy_frame = clean_frame.to(device), noisy_frame.to(device)
-    embeddings_clean = model(clean_frame).detach().cpu()
-    embeddings_noisy = model(noisy_frame).detach().cpu()
+
+    with torch.no_grad():
+        embeddings_clean = model(clean_frame).detach().cpu()
+        embeddings_noisy = model(noisy_frame).detach().cpu()
+
     end = time.time()
 
     # Generate a similarity matrix of all faces detected
     # Note that the same pairs of faces are being compared for
     # the noisy and clean images
-    evaluate_embeddings(embeddings_clean, embeddings_noisy)
+    print("Comparing Original images and Noisy images")
+    _ = evaluate_embeddings(embeddings_clean, embeddings_noisy)
 
     # Logging generic stats about execution time
     print("Preprocesing Time: {:.2f} s".format(preprocessing_end - start))
     print("InceptionResnet Inference time: {:.2f} s".format(end - inf_start))
 
+    # Get options for the model and generate clean images
+    # and do some profiling
+    transformer_start = time.time()
+    options = get_options(args.yaml_path)
+    clean_images(args.input_dir, args.result_dir, args.weights, options, device)
+    print(f"SUNet inference time (cleaning images): {time.time()-transformer_start:.2f} s")
+
+    # Generate similarity matrix for filtered images and clean images
+    filtered_imgs = get_filtered_imgs(args.result_dir)
+    with torch.no_grad():
+        embeddings_filtered = model(filtered_imgs).detach().cpu()
+
+    print("Comparing Original images and Filtered images")
+    _ = evaluate_embeddings(embeddings_clean, embeddings_filtered)
+
 
 
 if __name__ == '__main__':
-    args = parse_sunet()
+    args = parse_options()
     
-    # Collect aligned faces
-    main()
-
-    # Determine device for transformer inference
-    if args.device == 'cuda':
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    else:
-        device = torch.device('cpu')
-    
-    # Get options for the model and generate clean images
-    options = get_options(args.yaml_path)
-    clean_images(args.input_dir, args.result_dir, args.weights, options, device)
-
+    # Call main demo script
+    main(args)
