@@ -3,11 +3,14 @@ import os, time, io
 import argparse
 import zipfile
 from typing import Any, Tuple, List
+from natsort import natsorted
+from glob import glob
 
 # Math and Visualization Imports
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+from PIL import Image
 
 # PyTorch Imports
 import torch
@@ -78,6 +81,42 @@ class SUNetDataset(Dataset):
 
 
 
+class InceptionDataset(Dataset):
+    def __init__(self, root1: str, root2: str):
+        super(InceptionDataset, self).__init__()
+
+        if not os.path.exists(root1):
+            raise ValueError(f"Path {root1} does not exist")
+        
+        if not os.path.exists(root2):
+            raise ValueError(f"Path {root2} does not exist")
+        
+        files1 = natsorted(glob(os.path.join(root1, '*.jpg'))
+                  + glob(os.path.join(root1, '*.JPG'))
+                  + glob(os.path.join(root1, '*.png'))
+                  + glob(os.path.join(root1, '*.PNG')))
+        
+        files2 = natsorted(glob(os.path.join(root1, '*.jpg'))
+                  + glob(os.path.join(root1, '*.JPG'))
+                  + glob(os.path.join(root1, '*.png'))
+                  + glob(os.path.join(root1, '*.PNG')))
+        
+        self.files1 = files1
+        self.files2 = files2
+        self.to_tensor = T.ToTensor()
+    
+
+    def __getitem__(self, idx) -> Tuple[List[Tensor], List[Tensor]]:
+        im1 = Image.open( self.files1[idx] ).convert('RGB')
+        im2 = Image.open( self.files2[idx] ).convert('RGB')
+        return im1, im2
+    
+
+    def __len__(self) -> int:
+        return len(self.files1)
+
+
+
 def get_pre_loader(args: Any) -> DataLoader:
     root = args.data_root
     if not os.path.exists(root):
@@ -95,4 +134,16 @@ def get_pre_loader(args: Any) -> DataLoader:
     return pre_loader
 
 
+def get_loaders(args: Any) -> Tuple[DataLoader]:
+    dataset = InceptionDataset(args.root1, args.root2)
+    test_batches = (args.num_batches // 11) * args.batch_size
+    train_batches = (args.num_batches - (args.num_batches // 11) ) * args.batch_size
+    
+    train_data, test_data = torch.utils.data.random_split(
+        dataset, [train_batches, test_batches]
+    )
+    
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+    test_loader = DataLoader(test_data, batch_size=args.batch_size, num_workers=args.num_workers)
 
+    return train_loader, test_loader

@@ -162,8 +162,20 @@ def parse_options() -> Any:
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size during loading')
     parser.add_argument('--data_root', type=str, default='data_root/', help='Path to zipped dataset')
 
+    # Training Options
+    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate for training')
+    parser.add_argument('--optim', type=str, default='adam', help='optimizer used during training')
+    parser.add_argument('--scheduler', type=str, default='step', help='Scheduler for adaptive learning rate')
+    parser.add_argument('--weight_decay', type=float, default=1e-5, help='Weight decay to prevent weight explosion')
+    parser.add_argument('--step_size', type=int, default=3, help='step size for step lr scheduler')
+    parser.add_argument('--gamma', type=float, default=0.975, help='Decay for step LR scheduler')
+    parser.add_argument('--num_epochs', type=int, default=10, help='Number of Epochs to train')
+    parser.add_argument('--num_batches', type=int, default=330, help='Total training batches for training and validation split as 10:1')
+
     # Blurry dataset Options
     parser.add_argument('--num_blurry_batches', type=int, default=44, help='Number of batches to be generated for training InceptionResnet')
+    parser.add_argument('--root1', type=str, default='data1/', help='Path to blurry image dataset')
+    parser.add_argument('--root2', type=str, default='data2/', help='Path to clean images')
 
     # Flags
     parser.add_argument('--train', action='store_true', help='Flag to run training script')
