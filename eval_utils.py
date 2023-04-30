@@ -22,6 +22,7 @@ def evaluate_similarity(model: nn.Module, dataset: Dataset, batch_size: int, num
     running_mse = []
     for img1, img2 in tqdm(loader):
         img1, img2 = img1.to(device), img2.to(device)
+        print(img1.max())
 
         with torch.no_grad():
             out1 = model(img1)
@@ -33,6 +34,7 @@ def evaluate_similarity(model: nn.Module, dataset: Dataset, batch_size: int, num
         score = torch.mean(score)
         running_ssim.append(score.item())
 
+    print(f"DEBUG: (SSIM) {running_ssim[0]},  {running_ssim[2]}")
     avg_ssim = sum(running_ssim)/len(running_ssim)
     avg_mse = sum(running_mse)/len(running_mse)
     print(f"Average SSIM for Datasets is {avg_ssim:.5f} ") 
