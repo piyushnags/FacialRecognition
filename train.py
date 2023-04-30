@@ -60,16 +60,17 @@ def create_sample_dataset(args: Any):
 def train_one_epoch(model, train_loader, device, optimizer, epoch, print_freq=10):
     model.train()
 
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.MSELoss()
     epoch_losses = []
 
     for batch_idx, (im1, im2) in enumerate(tqdm(train_loader)):
         im1, im2 = im1.to(device), im2.to(device)
         optimizer.zero_grad()
 
-        out = model(im1)
+        out1 = model(im1)
+        out2 = model(im2)
 
-        loss = loss_fn(out, im2)
+        loss = loss_fn(out1, out2)
         loss.backward()
 
         epoch_losses.append( loss.item() )
@@ -85,14 +86,15 @@ def train_one_epoch(model, train_loader, device, optimizer, epoch, print_freq=10
 def evaluate(model, test_loader, device, epoch):
     model.eval()
 
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.MSELoss()
     losses = []
 
     with torch.no_grad():
         for im1, im2 in tqdm(test_loader):
             im1, im2 = im1.to(device), im2.to(device)
-            out = model(im1)
-            loss = loss_fn(out, im2)
+            out1 = model(im1)
+            out2 = model(im2)
+            loss = loss_fn(out1, out2)
             losses.append(loss.item())
     
     avg_loss = sum(losses)/len(losses)
