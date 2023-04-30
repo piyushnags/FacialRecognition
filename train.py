@@ -57,6 +57,34 @@ def create_sample_dataset(args: Any):
     print("Sample dataset created!")
 
 
+def save_aligned_datasets(args: Any):
+    if args.device == 'cuda':
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    else:
+        device = torch.device('cpu')
+
+    save_dir1 = 'blurry_faces/'
+    save_dir2 = 'sample_faces/'
+
+    dataset = InceptionDataset(args.root1, args.root2)
+    loader = DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers)
+
+    model = MTCNN(256, keep_all=True, device=device)
+
+    for i, (img1, img2) in enumerate(tqdm(loader)):
+        img1, img2 = img1.to(device), img2.to(device)
+        out1, out2 = model(img1), model(img2)
+        out1 = torch.round(out1*128+127.5)
+        out2 = torch.round(out2*128+127.5)
+        
+        for j in range(out1.size(0)):
+            path1 = os.path.join(save_dir1, f"image_{i}_{j}.png")
+            path2 = os.path.join(save_dir2, f"image_{i}_{j}.png")
+            torchvision.utils.save_image(out1[j], path1)
+            torchvision.utils.save_image(out2[j], path2)            
+
+
+
 def train_one_epoch(model, train_loader, device, optimizer, epoch, print_freq=10):
     model.train()
 
@@ -136,6 +164,8 @@ if __name__ == '__main__':
     args = parse_options()
     if args.make_blurry:
         create_sample_dataset(args)
+    elif args.save_aligned_ds:
+        save_aligned_datasets(args)
     elif args.train:
         if args.device == 'cuda':
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
