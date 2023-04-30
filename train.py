@@ -160,6 +160,8 @@ if __name__ == '__main__':
     args = parse_options()
     if args.make_blurry:
         create_sample_dataset(args)
+    elif args.make_corrupted:
+        create_corrupted_dataset(args)
     elif args.train:
         # Determine device for training model
         if args.device == 'cuda':

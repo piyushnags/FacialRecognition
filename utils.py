@@ -187,6 +187,7 @@ def parse_options() -> Any:
     # Flags
     parser.add_argument('--train', action='store_true', help='Flag to run training script')
     parser.add_argument('--make_blurry', action='store_true', help='Flag to generate the blurry dataset')
+    parser.add_argument('--make_corrupted', action='store_true', help='Creates the corrupted dataset, optional for inference')
     parser.add_argument('--save_aligned_ds', action='store_true', help='Flag to create a dataset with only faces. Needs pre-existing dataset')
     parser.add_argument('--add_noise', action='store_true', help='Flag to enable noise when sampling data')
     parser.add_argument('--eval_model', action='store_true', help='Flag to get the Average SSIM')
