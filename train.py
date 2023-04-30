@@ -61,9 +61,6 @@ def create_corrupted_dataset(args: Any):
     loader = get_pre_loader(args)
     device = torch.device('cpu')
 
-    model = get_sunet(args, device)
-    model.eval()
-
     if args.add_noise:
         save_dir = 'corrupted_dataset/'
         if not os.path.exists(save_dir):
