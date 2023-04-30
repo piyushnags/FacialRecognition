@@ -138,13 +138,27 @@ if __name__ == '__main__':
     if args.make_blurry:
         create_sample_dataset(args)
     elif args.train:
+        # Determine device for training model
         if args.device == 'cuda':
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
             device = torch.device('cpu')
+        
+        # Instantiate model with pretrained vggface2 weights
         model = InceptionResnetV1(pretrained='vggface2', device=device)
-        for child in list(model.children())[:-6]:
+        
+        # Freeze most of the model, we are only finetuning it 
+        # to generate good embeddings for restored images
+
+        # First freeze all params
+        for p in model.parameters():
+            p.requires_grad_(False)
+        
+        # Unfreeze last block before pooling, dropout, etc.
+        for child in list(model.children())[-6:-5]:
             for p in child.parameters():
-                p.requires_grad_(False)
+                p.requires_grad_(True)
+    
+
         train_loader, test_loader = get_loaders(args)
         train(args, model, train_loader, test_loader, device)

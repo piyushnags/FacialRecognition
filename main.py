@@ -105,12 +105,13 @@ def main(args: Any):
 
     preprocessing_end = time.time()
 
+    frame_idx = 10
     # Save the clean faces
-    clean_frame = faces_aligned[0]
+    clean_frame = faces_aligned[frame_idx]
     save_faces(clean_frame, 'aligned_faces')
     
     # Save the noisy faces
-    noisy_frame = noisy_faces[0]
+    noisy_frame = noisy_faces[frame_idx]
     save_faces(noisy_frame, 'noisy_faces')
 
     # Pass the aligned and noisy faces to the InceptionResnet model
