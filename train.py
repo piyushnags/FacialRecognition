@@ -141,4 +141,4 @@ if __name__ == '__main__':
             device = torch.device('cpu')
         model = InceptionResnetV1(pretrained='vggface2', device=device)
         train_loader, test_loader = get_loaders(args)
-        train(args, model, train_loader, test_loader)
+        train(args, model, train_loader, test_loader, device)
