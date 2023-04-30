@@ -4,6 +4,7 @@ from tqdm import tqdm
 
 # Math and Visualization Imports
 from pytorch_msssim import ssim
+import matplotlib.pyplot as plt
 
 # PyTorch Imports
 import torch
@@ -20,7 +21,9 @@ def evaluate_similarity(model: nn.Module, dataset: Dataset, batch_size: int, num
     loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers)
     running_ssim = []
     running_mse = []
-    for img1, img2 in tqdm(loader):
+    for i, (img1, img2) in enumerate(tqdm(loader)):
+        if i == 0:
+            plt.imshow(img1[0].permute(1,2,0))
         img1, img2 = img1.to(device), img2.to(device)
         print(img1.max())
         print(img1.min())
