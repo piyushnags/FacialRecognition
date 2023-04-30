@@ -156,6 +156,17 @@ def parse_options() -> Any:
     parser.add_argument('--device', type=str, default='cpu', help='Device for training/inference. Use cuda for GPU')
     parser.add_argument('--noise_var', type=float, default=3e-2, help='Variance of Gaussian noise added as corruption')
     parser.add_argument('--noise_mean', type=float, default=1e-2, help='Mean of Gaussian noise added as corruption')
+
+    # General Options
+    parser.add_argument('--num_workers', type=int, default=2, help='Number of worker threads during loading')
+    parser.add_argument('--batch_size', type=int, default=32, help='Batch size during loading')
+
+    # Blurry dataset Options
+    parser.add_argument('--num_blurry_batches', type=int, default=44, help='Number of batches to be generated for training InceptionResnet')
+
+    # Flags
+    parser.add_argument('--train', action='store_true', help='Flag to run training script')
+    parser.add_argument('--make_blurry', action='store_true', help='Flag to generate the blurry dataset')
     args = parser.parse_args()
     return args
 

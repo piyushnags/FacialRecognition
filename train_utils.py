@@ -19,6 +19,18 @@ import torchvision.transforms as T
 
 
 
+class _AddNoise():
+    def __init__(self, var=1., mean=0.):
+        self.std = var**0.5
+        self.mean = mean
+
+
+    def __call__(self, x: Tensor) -> Tensor:
+        x += self.std*torch.randn(x.size()) + self.mean
+        return torch.clamp(x, 0, 1)
+
+
+
 class ZipDataset(Dataset):
     def __init__(self, root_path, cache_into_memory=False):
         if cache_into_memory:
@@ -40,10 +52,45 @@ class ZipDataset(Dataset):
 
     def __len__(self):
         return len(self.name_list)
+    
 
 
-def get_pre_loader(root: str) -> DataLoader:
+class SUNetDataset(Dataset):
+    def __init__(self, zip_dataset, transforms=None):
+        super(SUNetDataset, self).__init__()
+        self.dset = zip_dataset
+        self.transforms = transforms
+        self.preprocess = T.Compose([
+            T.Resize( (320,320), antialias=None )
+        ])
+    
+
+    def __getitem__(self, idx) -> List[Tensor]:
+        img = self.dset[idx]
+        img = self.preprocess(img)
+        if self.transforms is not None:
+            img = self.transforms(img)
+        return img
+    
+
+    def __len__(self) -> int:
+        return len(self.dset)
+
+
+
+def get_pre_loader(args: Any) -> DataLoader:
+    root = args.data_root
     if not os.path.exists(root):
         raise ValueError(f"Path {root} does not exist")
     
-    pass
+    zip_dataset = ZipDataset(root, cache_into_memory=True)
+    augment = T.Compose([
+        _AddNoise(args.noise_var, args.noise_mean)
+    ])
+    dataset = SUNetDataset(zip_dataset, augment)
+
+    pre_loader = DataLoader(dataset, args.batch_size, num_workers=args.num_workers)
+    return pre_loader
+
+
+
