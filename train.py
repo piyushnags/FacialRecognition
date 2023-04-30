@@ -43,6 +43,10 @@ def create_sample_dataset(args: Any):
     
     else:
         save_dir = 'sample_dataset/'
+
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+            
         for i, img in enumerate(tqdm(loader)):
             if i > args.num_blurry_batches:
                 break
