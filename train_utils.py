@@ -96,10 +96,10 @@ class InceptionDataset(Dataset):
                   + glob(os.path.join(root1, '*.png'))
                   + glob(os.path.join(root1, '*.PNG')))
         
-        files2 = natsorted(glob(os.path.join(root1, '*.jpg'))
-                  + glob(os.path.join(root1, '*.JPG'))
-                  + glob(os.path.join(root1, '*.png'))
-                  + glob(os.path.join(root1, '*.PNG')))
+        files2 = natsorted(glob(os.path.join(root2, '*.jpg'))
+                  + glob(os.path.join(root2, '*.JPG'))
+                  + glob(os.path.join(root2, '*.png'))
+                  + glob(os.path.join(root2, '*.PNG')))
         
         self.files1 = files1
         self.files2 = files2
