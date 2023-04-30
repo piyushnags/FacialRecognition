@@ -1,5 +1,5 @@
 # Buit-in Imports
-import os, time, typing
+import os, time, sys
 
 # Math Imports
 import matplotlib.pyplot as plt
@@ -20,6 +20,8 @@ from facenet_pytorch import *
 
 # Utility Functions
 from utils import *
+from train_utils import InceptionDataset
+from eval_utils import *
 
 
 def main(args: Any):
@@ -40,14 +42,14 @@ def main(args: Any):
     '''
 
     # Initialize vid reader
-    vid_path = 'facenet_pytorch/examples/video.mp4'
+    vid_path = args.vid_path
     vid = cv2.VideoCapture(vid_path)
 
     # Initialize vid writer
     W, H = int(vid.get(3)), int(vid.get(4))
     out_path = 'results/out.mp4'
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = 10.0
+    fps = 30.0
     out = cv2.VideoWriter(out_path, fourcc, fps, (W, H))
     
     # Open and parse frames from filestream
@@ -67,7 +69,7 @@ def main(args: Any):
     mtcnn = MTCNN( clip_size, keep_all=True, device=device )
     model = InceptionResnetV1(pretrained='vggface2', device=device)
     inception_weights = torch.load('weights/inception.pth', map_location=device)
-    model.load_state_dict(inception_weights)
+    # model.load_state_dict(inception_weights)
     model.eval()
 
     # Initialize additive noise as a torch 
@@ -83,7 +85,12 @@ def main(args: Any):
     faces_aligned = []
     noisy_faces = []
     start = time.time()
+    curr = 1
     while vid.isOpened() and r:
+        if curr > args.max_frames:
+            break
+        curr += 1
+
         r, frame = vid.read()
         if not r:
             break
@@ -95,7 +102,7 @@ def main(args: Any):
         # compute noisy images using a deep copy of the tensor
         noisy_faces.append( noisify(faces.clone()) )
 
-        # TODO: remove the write from this loop
+        # NOTE: logging the content actually processed into an out.mp4 file
         out.write(frame)
 
     # Release reader/writer objects and close all frames
@@ -105,13 +112,13 @@ def main(args: Any):
 
     preprocessing_end = time.time()
 
-    frame_idx = 10
+    frame_idx = 20
     # Save the clean faces
-    clean_frame = faces_aligned[frame_idx]
+    clean_frame = faces_aligned[frame_idx][:args.max_faces]
     save_faces(clean_frame, 'aligned_faces')
     
     # Save the noisy faces
-    noisy_frame = noisy_faces[frame_idx]
+    noisy_frame = noisy_faces[frame_idx][:args.max_faces]
     save_faces(noisy_frame, 'noisy_faces')
 
     # Pass the aligned and noisy faces to the InceptionResnet model
@@ -156,5 +163,16 @@ def main(args: Any):
 if __name__ == '__main__':
     args = parse_options()
     
+    # Evaluate model performance and compute SSIM of restoration
+    if args.eval_model:
+        if args.device == 'cuda':
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            device = torch.device('cpu')
+        model = InceptionResnetV1(pretrained='vggface2', device=device)
+        dataset = InceptionDataset(args.root1, args.root2)
+        evaluate_similarity(model, dataset, args.batch_size, args.num_workers, device)
+        sys.exit(0)
+
     # Call main demo script
     main(args)

@@ -147,6 +147,11 @@ def parse_options() -> Any:
     '''
     parser = argparse.ArgumentParser()
 
+    # Video Options
+    parser.add_argument('--vid_path', type=str, default='facenet_pytorch/examples/video.mp4', help='path to mp4 file')
+    parser.add_argument('--max_frames', type=int, default=100, help='max frames to read from a video')
+    parser.add_argument('--max_faces', type=int, default=5, help='max faces to compare/evaluate in any particular frame')
+
     # SUNet options
     parser.add_argument('--yaml_path', type=str, default='training.yaml', help='Path to YAML config, needed for SUNet configuration')
     parser.add_argument('--input_dir', type=str, default='results/noisy_faces/', help='path to dir containing corrupted images')
@@ -184,6 +189,7 @@ def parse_options() -> Any:
     parser.add_argument('--make_blurry', action='store_true', help='Flag to generate the blurry dataset')
     parser.add_argument('--save_aligned_ds', action='store_true', help='Flag to create a dataset with only faces. Needs pre-existing dataset')
     parser.add_argument('--add_noise', action='store_true', help='Flag to enable noise when sampling data')
+    parser.add_argument('--eval_model', action='store_true', help='Flag to get the Average SSIM')
     args = parser.parse_args()
     return args
 

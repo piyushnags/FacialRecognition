@@ -84,7 +84,7 @@ def train_one_epoch(model, train_loader, device, optimizer, epoch, print_freq=10
     print(f"Average training loss for Epoch {epoch}: {avg_loss:.5f} ")
 
 
-def evaluate(model, test_loader, device, epoch):
+def evaluate(model, test_loader, device):
     model.eval()
 
     loss_fn = nn.MSELoss()
@@ -126,7 +126,7 @@ def train(args: Any, model: nn.Module, train_loader: DataLoader, test_loader: Da
     
     for epoch in range(1, epochs+1):
         train_one_epoch(model, train_loader, device, optimizer, epoch, args.print_freq)
-        evaluate(model, test_loader, device, epoch)
+        evaluate(model, test_loader, device)
         scheduler.step()
     
     torch.save(model.state_dict(), os.path.join(args.train_dir, 'inception.pth'))
