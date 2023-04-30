@@ -54,8 +54,31 @@ def create_sample_dataset(args: Any):
                 save_path = os.path.join(save_dir, f"image_{i}_{j}.png")
                 torchvision.utils.save_image(img[j], save_path)
     
-    print("Sample dataset created!")           
+    print("Sample dataset created!")
 
+
+def create_corrupted_dataset(args: Any):
+    loader = get_pre_loader(args)
+    device = torch.device('cpu')
+
+    model = get_sunet(args, device)
+    model.eval()
+
+    if args.add_noise:
+        save_dir = 'corrupted_dataset/'
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        
+        for i, img in enumerate(tqdm(loader)):
+            if i > args.num_blurry_batches:
+                break
+            for j in range(img.size(0)):
+                save_path = os.path.join(save_dir, f"image_{i}_{j}.png")
+                torchvision.utils.save_image(img[j], save_path)
+        
+        print("Corrupted Dataset created!")
+    else:
+        raise RuntimeError("Need to enable add_noise flag for generating the corrupted dataset")
 
 
 def train_one_epoch(model, train_loader, device, optimizer, epoch, print_freq=10):
