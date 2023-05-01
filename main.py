@@ -1,3 +1,12 @@
+'''
+main module for using the full
+facial recognition pipeline.
+Please see the GitHub repo for
+more info about running the code
+and updates on the AutoEncoder:
+https://github.com/piyushnags/FacialRecognition
+'''
+
 # Buit-in Imports
 import os, time, sys
 
@@ -76,7 +85,7 @@ def main(args: Any):
     mtcnn = MTCNN( clip_size, keep_all=True, device=device )
     model = InceptionResnetV1(pretrained='vggface2', device=device)
     inception_weights = torch.load('weights/inception.pth', map_location=device)
-    # model.load_state_dict(inception_weights)
+    model.load_state_dict(inception_weights)
     model.eval()
 
     # Initialize additive noise as a torch 
