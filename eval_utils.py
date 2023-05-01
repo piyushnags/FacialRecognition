@@ -36,4 +36,5 @@ def evaluate_similarity(model: nn.Module, dataset: Dataset, batch_size: int, num
     avg_ssim = sum(running_ssim)/len(running_ssim)
     avg_mse = sum(running_mse)/len(running_mse)
     print(f"Average SSIM for Datasets is {avg_ssim:.5f} ") 
-    print(f"Average MSE for Datasets is {avg_mse:.5f}")
+    print(f"Average MSE of embeddings for Datasets is {avg_mse:.5f}")
+    print(f"Standard Deviation of MSE for embeddings is {torch.std( torch.as_tensor(running_mse) )}")
