@@ -357,5 +357,8 @@ def get_filtered_imgs(path: str, disable_blur: bool = False, k: int = 5, sig: fl
 
 
 def clear_results():
-    shutil.rmtree('results/')
-    shutil.rmtree('sunet_results/')
+    if os.path.exists('results/'):
+        shutil.rmtree('results/')
+    
+    if os.path.exists('sunet_results/'):
+        shutil.rmtree('sunet_results/')
