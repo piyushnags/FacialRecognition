@@ -1,6 +1,6 @@
 # Buit-in, Parsing Imports
 from typing import Any, List
-import os, time
+import os, time, shutil
 import argparse
 import yaml
 from glob import glob
@@ -24,6 +24,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 import torchvision
+import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
 # Facenet Imports
@@ -151,6 +152,7 @@ def parse_options() -> Any:
     parser.add_argument('--vid_path', type=str, default='facenet_pytorch/examples/video.mp4', help='path to mp4 file')
     parser.add_argument('--max_frames', type=int, default=100, help='max frames to read from a video')
     parser.add_argument('--max_faces', type=int, default=5, help='max faces to compare/evaluate in any particular frame')
+    parser.add_argument('--disable_blur', action='store_true', help='Flag to disable smoothing of cropped faces (use this only if you have high res videos)')
 
     # SUNet options
     parser.add_argument('--yaml_path', type=str, default='training.yaml', help='Path to YAML config, needed for SUNet configuration')
@@ -191,6 +193,7 @@ def parse_options() -> Any:
     parser.add_argument('--save_aligned_ds', action='store_true', help='Flag to create a dataset with only faces. Needs pre-existing dataset')
     parser.add_argument('--add_noise', action='store_true', help='Flag to enable noise when sampling data')
     parser.add_argument('--eval_model', action='store_true', help='Flag to get the Average SSIM')
+    parser
     args = parser.parse_args()
     return args
 
@@ -312,7 +315,7 @@ def evaluate_embeddings(e1: Tensor, e2: Tensor) -> pd.DataFrame:
     return df
 
 
-def get_filtered_imgs(path: str) -> List[Tensor]:
+def get_filtered_imgs(path: str, disable_blur: bool = False, k: int = 5, sig: float = 0.9) -> List[Tensor]:
     '''
     Description:
         Helper function to return all images at specified path
@@ -344,4 +347,15 @@ def get_filtered_imgs(path: str) -> List[Tensor]:
         else:
             x = torch.cat( (x, im.unsqueeze(0)) )
     
+    if not disable_blur:
+        blur = T.GaussianBlur((k,k), sig)
+        x = blur(x)
+
+    plt.show()
+
     return x    
+
+
+def clear_results():
+    shutil.rmtree('results/')
+    shutil.rmtree('sunet_results/')

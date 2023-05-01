@@ -41,12 +41,19 @@ def main(args: Any):
         None
     '''
 
+    # Initialize working dir
+    clear_results()
+
     # Initialize vid reader
     vid_path = args.vid_path
     vid = cv2.VideoCapture(vid_path)
 
     # Initialize vid writer
     W, H = int(vid.get(3)), int(vid.get(4))
+
+    if not os.path.exists('results/'):
+        os.makedirs('results')
+
     out_path = 'results/out.mp4'
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fps = 30.0
@@ -150,7 +157,7 @@ def main(args: Any):
     print(f"SUNet inference time (cleaning images): {time.time()-transformer_start:.2f} s")
 
     # Generate similarity matrix for filtered images and clean images
-    filtered_imgs = get_filtered_imgs(args.result_dir)
+    filtered_imgs = get_filtered_imgs(args.result_dir, disable_blur=args.disable_blur)
     filtered_imgs = filtered_imgs.to(device)
     with torch.no_grad():
         embeddings_filtered = model(filtered_imgs).detach().cpu()
